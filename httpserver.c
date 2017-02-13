@@ -139,7 +139,11 @@ int start_server(int PORT_NUMBER)
 		i++; 
 	}    
 
+<<<<<<< HEAD
       puts(cp);
+=======
+//      puts(cp);
+>>>>>>> 39d09c1738f15a50fddef24adf14f97d1998b641
 
       while (1) {
       // 4. accept: wait here until we get a connection on that port
@@ -157,15 +161,26 @@ int start_server(int PORT_NUMBER)
 	request[bytes_received] = '\0';
 	// print it to standard out
 	printf("This is the incoming request:\n%s\n", request);
+<<<<<<< HEAD
 	
 	//here is where we will parse and perform logic based on the type of request
 	// this is the message that we'll send back
 	char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>Hello world!<p>This text is <b>bold</b>.</html>";
 	 
+=======
+
+	// this is the message that we'll send back
+	char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>Hello world!<p>This text is <b>bold</b>.</html>";
+
+>>>>>>> 39d09c1738f15a50fddef24adf14f97d1998b641
 	// 6. send: send the outgoing message (response) over the socket
 	// note that the second argument is a char*, and the third is the number of chars	
 	//	send(fd, reply, strlen(reply), 0);
 	send(fd, cp, strlen(cp), 0);
+<<<<<<< HEAD
+=======
+	
+>>>>>>> 39d09c1738f15a50fddef24adf14f97d1998b641
 
 	// 7. close: close the connection
 	close(fd);
