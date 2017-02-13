@@ -15,6 +15,15 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <errno.h>
 #include <string.h>
 
+typedef struct Row{
+        char class[50];
+        char instructor[50];
+        char size[10];
+        char c_quality[10];
+        char i_quality[10];
+        char difficulty[10];
+} row;
+
 int start_server(int PORT_NUMBER)
 {
 
@@ -105,18 +114,52 @@ int start_server(int PORT_NUMBER)
 
       int count_char = b;
       // include the http_before text in malloc
-
+	
+	//adding the header
       int i = 0;
       while (http_before[i] != NULL) {
 	cp[i] = http_before[i];
 	i++;
       }
 
+      row* rows = malloc(sizeof(row) * 1000);
+      char str_cpy[200];
+      char str_cpy2[50];
+      char str_cpy3[50];
+      char* token;
+      const char s[5] = ",\n";
 
+      int count_line = 0; 
       while (fgets(str, 80, fp) != NULL) {
 	//	        puts(str);  // test code
        
+        strcpy(str_cpy, str);
+	token = strtok(str_cpy, s);
 
+	int counter = 0;	
+        while (token != NULL) {
+	//  printf("%s$$\n", token);
+	          if (counter == 0){
+          strcpy(rows[count_line].class, token);}
+           if (counter == 1){
+                strcpy(rows[count_line].instructor, token);
+//		printf("instructor is: %s\n", rows[count_line].instructor);}
+          if(counter == 2){
+		strcpy(rows[count_line].size, token);}
+	  if(counter == 3){
+		strcpy(rows[count_line].c_quality, token);}
+	  if(counter == 4){
+		strcpy(rows[count_line].i_quality, token);}
+	  if(counter == 5){
+		strcpy(rows[count_line].difficulty, token);}
+
+	  counter++;
+
+	
+	  token = strtok(NULL, s);
+	 
+	}
+	
         int str_len = strlen(str);
         for (int i = 0;i < str_len;i++) {
           cp[count_char + i] = str[i];
@@ -127,6 +170,8 @@ int start_server(int PORT_NUMBER)
         cp[count_char + str_len + 3] = '>';
         count_char = count_char + str_len + 4;
       }     
+	
+	
 
   	char after[] = "</body></html>";
 	
@@ -139,11 +184,15 @@ int start_server(int PORT_NUMBER)
 		i++; 
 	}    
 
-<<<<<<< HEAD
-      puts(cp);
-=======
 //      puts(cp);
->>>>>>> 39d09c1738f15a50fddef24adf14f97d1998b641
+
+      int test_count = 0;
+      while (1) {
+	printf("%s\n", rows[test_count].class);
+	printf("%s\n", rows[test_count].instructor);
+        test_count++;
+//	if (rows[test_count] == NULL) break;
+      }
 
       while (1) {
       // 4. accept: wait here until we get a connection on that port
@@ -161,26 +210,15 @@ int start_server(int PORT_NUMBER)
 	request[bytes_received] = '\0';
 	// print it to standard out
 	printf("This is the incoming request:\n%s\n", request);
-<<<<<<< HEAD
 	
 	//here is where we will parse and perform logic based on the type of request
 	// this is the message that we'll send back
 	char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>Hello world!<p>This text is <b>bold</b>.</html>";
 	 
-=======
-
-	// this is the message that we'll send back
-	char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>Hello world!<p>This text is <b>bold</b>.</html>";
-
->>>>>>> 39d09c1738f15a50fddef24adf14f97d1998b641
 	// 6. send: send the outgoing message (response) over the socket
 	// note that the second argument is a char*, and the third is the number of chars	
 	//	send(fd, reply, strlen(reply), 0);
 	send(fd, cp, strlen(cp), 0);
-<<<<<<< HEAD
-=======
-	
->>>>>>> 39d09c1738f15a50fddef24adf14f97d1998b641
 
 	// 7. close: close the connection
 	close(fd);
@@ -194,6 +232,8 @@ int start_server(int PORT_NUMBER)
   
       return 0;
 } 
+}
+
 
 
 
