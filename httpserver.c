@@ -157,10 +157,11 @@ int start_server(int PORT_NUMBER)
 	request[bytes_received] = '\0';
 	// print it to standard out
 	printf("This is the incoming request:\n%s\n", request);
-
+	
+	//here is where we will parse and perform logic based on the type of request
 	// this is the message that we'll send back
 	char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>Hello world!<p>This text is <b>bold</b>.</html>";
-
+	 
 	// 6. send: send the outgoing message (response) over the socket
 	// note that the second argument is a char*, and the third is the number of chars	
 	//	send(fd, reply, strlen(reply), 0);
