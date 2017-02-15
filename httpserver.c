@@ -128,17 +128,17 @@ int start_server(int PORT_NUMBER)
       char str_cpy3[50];
       char* token;
       const char s[5] = ",\n";
-
+	printf("got up to while loop\n");
       int count_line = 0; 
       while (fgets(str, 80, fp) != NULL) {
 	//	        puts(str);  // test code
        
         strcpy(str_cpy, str);
 	token = strtok(str_cpy, s);
-
+	printf("got into str cpy\n");
 	int counter = 0;	
-        while (token != NULL) {
-	//  printf("%s$$\n", token);
+          while (token != NULL) {
+//	  printf("%s$$\n", token);
 	          if (counter == 0){
           strcpy(rows[count_line].class, token);}
            if (counter == 1){
@@ -153,9 +153,9 @@ int start_server(int PORT_NUMBER)
 	  if(counter == 5){
 		strcpy(rows[count_line].difficulty, token);}
 
-	  counter++;
-
-	
+	  counter++; //this isn't quite right
+	  count_line++; //this with this
+	printf("inside inner while loop\n");
 	  token = strtok(NULL, s);
 	 
 	}
@@ -170,8 +170,18 @@ int start_server(int PORT_NUMBER)
         cp[count_char + str_len + 3] = '>';
         count_char = count_char + str_len + 4;
       }     
+	printf("got up to form\n");
+	//don't know about destination for action	
+	char form[] = "<form action=\"filter.html\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"Filter\" checked>Filter<br><input type=\"radio\" name=\"category\" value=\"Sort\"> Sort<br><input type=\"radio\" name=\"category\" value=\"Calculation\"> Calculation<br><input type=\"submit\" value=\"Submit\"></form>";
 	
+	int k = strlen(form);
+	printf("string length of form is : %d\n", k);	
 	
+	i = 0;
+	while(form[i] != NULL){
+		cp[count_char + i] = form[i];
+		i++;
+	}	
 
   	char after[] = "</body></html>";
 	
@@ -183,6 +193,7 @@ int start_server(int PORT_NUMBER)
 		cp[count_char + i] = after[i];
 		i++; 
 	}    
+
 
 //      puts(cp);
 
