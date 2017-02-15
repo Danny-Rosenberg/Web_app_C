@@ -128,11 +128,10 @@ int start_server(int PORT_NUMBER) {
       if (counter == 4) {
         strcpy(rows[count_line].i_quality, token);
       }
-      if(counter == 5){
+      if (counter == 5) {
         strcpy(rows[count_line].difficulty, token);
       }
       counter++;
-      count_line++;
 
       token = strtok(NULL, s);
 
@@ -147,6 +146,10 @@ int start_server(int PORT_NUMBER) {
     cp[count_char + str_len + 2] = 'r';
     cp[count_char + str_len + 3] = '>';
     count_char = count_char + str_len + 4;
+
+// go to the next line
+    count_line++;
+
     }     
 
 
@@ -164,7 +167,12 @@ int start_server(int PORT_NUMBER) {
 
 //      puts(cp);
 
-  printf("%s\n",rows[0].c_quality);
+// test code to print elements
+  for (int i = 0;i < 100;i ++) {
+    printf("%s\n", rows[i].c_quality);
+    printf("%s\n", rows[i].instructor);
+
+  }
 
   while (1) {
       // 4. accept: wait here until we get a connection on that port
