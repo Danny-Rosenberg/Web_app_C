@@ -168,42 +168,79 @@ int start_server(int PORT_NUMBER) {
 //      puts(cp);
 
 // test code to print elements
-  for (int i = 0;i < 100;i ++) {
-    printf("%s\n", rows[i].c_quality);
-    printf("%s\n", rows[i].instructor);
+  // for (int i = 0;i < 100;i ++) {
+  //   printf("%s\n", rows[i].c_quality);
+  //   printf("%s\n", rows[i].instructor);
 
-  }
+  // }
 
   while (1) {
       // 4. accept: wait here until we get a connection on that port
     int sin_size = sizeof(struct sockaddr_in);
     int fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
     if (fd != -1) {
-     printf("Server got a connection from (%s, %d)\n", inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
+    printf("Server got a connection from (%s, %d)\n", inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
 
 	// buffer to read data into
-     char request[1024];
+    char request[1024];
 
 	// 5. recv: read incoming message (request) into buffer
-     int bytes_received = recv(fd,request,1024,0);
+    int bytes_received = recv(fd,request,1024,0);
 	// null-terminate the string
-     request[bytes_received] = '\0';
+    request[bytes_received] = '\0';
 	// print it to standard out
+
      printf("This is the incoming request:\n%s\n", request);
 
 	//here is where we will parse and perform logic based on the type of request
 	// this is the message that we'll send back
-     char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>Hello world!<p>This text is <b>bold</b>.</html>";
+
+    const char n[3] = "\n";
+    char *token;
+       /* get the first token */
+    token = strtok(request, n);
+    char* str2 = "GET /all ";
+    char* str3 = "GET /index.html ";
+    char* str4 = "GET /filter ";
+    char* str5 = "GET /sort ";
+    int parse_flag = 0;
+   /* walk through other tokens */
+    while( token != NULL ) 
+    {
+      printf( "%s\n", token );
+      if (strncmp(str2, token, 9) == 0 || strncmp(str3, token, 16) == 0) {
+        parse_flag = 1;
+
+        // printf("this is where we should code !\n");
+        }
+      if (strncmp(str4, token, 12) == 0) {
+        parse_flag = 2;
+      }
+      if (strncmp(str5, token, 10) == 0) {
+        parse_flag = 3;
+      }
+
+      token = strtok(NULL, s);
+    }
+    char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have <p>a <b>filter</b>.</html>";
+    char *reply2 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have<p>a<b>sort</b>.</html>";
+
+
+    if (parse_flag == 1) send(fd, cp, strlen(cp), 0);
+    if (parse_flag == 2) send(fd, reply, strlen(reply), 0);
+    if (parse_flag == 3) send(fd, reply2, strlen(reply2), 0);
+
+
 
 	// 6. send: send the outgoing message (response) over the socket
 	// note that the second argument is a char*, and the third is the number of chars	
 	//	send(fd, reply, strlen(reply), 0);
-     send(fd, cp, strlen(cp), 0);
+    // send(fd, cp, strlen(cp), 0);
 
 	// 7. close: close the connection
-     close(fd);
-     printf("Server closed connection\n");
-   }
+    close(fd);
+    printf("Server closed connection\n");
+    }
   }
       // 8. close: close the socket
   close(sock);
