@@ -76,11 +76,7 @@ int start_server(int PORT_NUMBER) {
 
 
   char* cp = malloc(sizeof(char) * 40000);
-
-  //for the form
-  char* cp2 = malloc(sizeof(char) * 41000);
-
-
+  
       //x      int count_char = 0;
 
   char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body>";
@@ -102,6 +98,8 @@ int start_server(int PORT_NUMBER) {
 // making the struct
   row* rows = malloc(sizeof(row) * 1000);
   char str_cpy[200];
+  char str_cpy2[50];
+  char str_cpy3[50];
   char* token;
   const char s[5] = ",\n";
 
@@ -233,18 +231,19 @@ int start_server(int PORT_NUMBER) {
     char *reply3 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>index.html!</html>";
     char* forms = "<html><form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
     char* forms2 = "</html>";
-    // char dest[300];
-    strcat(cp2, forms);
-    strcat(cp2, cp);
-    strcat(cp2, forms2);
+    char dest[41000];
+    strcat(dest, forms);
+    strcat(dest, cp);
+    strcat(dest, forms2);
 
-     // send(fd, cp2, strlen(cp2), 0); 
 
     if (parse_flag == 1) send(fd, cp, strlen(cp), 0);   // this is for /all
     if (parse_flag == 2) send(fd, reply, strlen(reply), 0);   // this is for filter
     if (parse_flag == 3) send(fd, reply2, strlen(reply2), 0);  // this is for sort
-    if (parse_flag == 4) send(fd, cp2, strlen(cp2), 0);
+    if (parse_flag == 4) {
+      send(fd, dest, strlen(dest), 0);
       // code in here to make index.html!
+    }
 
 
 	// 6. send: send the outgoing message (response) over the socket
