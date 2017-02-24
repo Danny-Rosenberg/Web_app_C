@@ -204,33 +204,36 @@ int start_server(int PORT_NUMBER) {
     token = strtok(request, n);
     char* str2 = "GET /all ";
     char* str3 = "GET /index.html ";
-    char* str4 = "GET /filter ";
-    char* str5 = "GET /sort ";
+    char* str4 = "GET /httpserver.c?category=filter ";
+    char* str5 = "GET /httpserver.c?category=sort ";
+    char* str6 = "GET /httpserver.c?category=calculate ";
     int parse_flag = 0;
    /* walk through other tokens */
     while( token != NULL ) 
     {
       printf( "%s\n", token );
-      if (strncmp(str2, token, 9) == 0) {
+      if (strncmp(str2, token, strlen(str2)) == 0) {
         parse_flag = 1; // for /all
 
         // printf("this is where we should code !\n");
         }
-      else if (strncmp(str4, token, 12) == 0) {
+      else if (strncmp(str4, token, strlen(str4)) == 0) {
         parse_flag = 2; // for filter
       }
-      else if (strncmp(str5, token, 10) == 0) {
+      else if (strncmp(str5, token, strlen(str5)) == 0) {
         parse_flag = 3; // for sort
       }
-      else if (strncmp(str3, token, 16) == 0) {
+      else if (strncmp(str3, token, strlen(str3)) == 0) {
         parse_flag = 4; // for index.html
+      } else if(strncmp(str6, token, strlen(str6)) == 0) {
+        parse_flag = 5; // for calculate
       }
 
       token = strtok(NULL, s);
     }
-    char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have <p>a <b>filter</b>.</html>";
+    char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<!DOCTYPE html><html><body><form >filter by course instructor : <br> <input type=\"text\" name=\"instructor\" value=\"\"> <input type=\"submit\" value=\"Submit\"> <br> </form> <form> filter by course id : <br> <input type=\"text\" name=\"course_id\" value=\"\"> <input type=\"submit\" value=\"Submit\"> <br>  </form>  </body> </html> ";
     char *reply2 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have<p>a <b>sort</b>.</html>";
-    char *reply3 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>index.html!</html>";
+    char *reply3 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>calculate!</html>";
     char* forms = "<html><form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
     char* forms2 = "</html>";
     // char dest[300];
@@ -241,9 +244,12 @@ int start_server(int PORT_NUMBER) {
      // send(fd, cp2, strlen(cp2), 0); 
 
     if (parse_flag == 1) send(fd, cp, strlen(cp), 0);   // this is for /all
-    if (parse_flag == 2) send(fd, reply, strlen(reply), 0);   // this is for filter
+    if (parse_flag == 2){
+      send(fd, reply, strlen(reply), 0);   // this is for filter
+    } 
     if (parse_flag == 3) send(fd, reply2, strlen(reply2), 0);  // this is for sort
-    if (parse_flag == 4) send(fd, cp2, strlen(cp2), 0);
+    if (parse_flag == 4) send(fd, cp2, strlen(cp2), 0);// for index.html
+    if (parse_flag == 5) send(fd, reply3, strlen(reply3), 0); // calculation
       // code in here to make index.html!
 
 
