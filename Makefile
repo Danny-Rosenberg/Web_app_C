@@ -3,8 +3,8 @@ ARGS = -Wall
 
 all: httpserver
 
-httpserver: httpserver.c
-	$(CC) -lpthread -o httpserver $(ARGS) httpserver.c -g
+httpserver: httpserver_play.c
+	$(CC) -lpthread -o httpserver $(ARGS) httpserver_play.c -g
 
 
 clean:
