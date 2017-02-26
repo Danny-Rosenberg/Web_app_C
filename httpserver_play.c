@@ -28,11 +28,13 @@ typedef struct Row{
 void addHeader(char* file){
 	
      char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body>";
-     int i = 0;
-     while (http_before[i] != NULL) {
-     file[i] = http_before[i];
-     i++;
-     }
+    
+    strcat(file, http_before);
+    
+    char forms[] = "<form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort on course quality<br><input type=\"radio\" name=\"category\" value=\"sort2\" checked>sort on difficulty<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
+    
+    strcat(file, forms);
+
     
      char table[] = "<table><tr><th>Course Name</th><th>Instructor Name</th><th>Class Size</th><th>Course Quality</th><th>Instructor Quality</th><th>Difficulty</th>";
     
@@ -42,12 +44,8 @@ void addHeader(char* file){
 
 void addFooter(char* file){
 	
-  char forms[] = "<form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
-    
-  
-   strcat(file, forms);
-	
-  char after[] = "</table></body></html>";
+  	
+  char after[] = "</body></html>";
   strcat(file, after);
 
 }
@@ -60,22 +58,39 @@ void addBreaks(row rows[], char* file, int num_lines){
 
 //probably also need to add ','
    for(i = 0; i < num_lines; i++) {
-      char* line = malloc(sizeof(char) * 1000);
-	strcat(line, rows[i].class);
-	strcat(line, rows[i].instructor);
-	strcat(line, rows[i].size);
-	strcat(line, rows[i].c_quality);
-	strcat(line, rows[i].i_quality);
-	strcat(line, rows[i].difficulty);
-	strcat(line, "<br>");
-	strcat(file, line); //adding lines to the file.  
+//      char* line = malloc(sizeof(char) * 1000);
+       strcat(file, "THIS IS A BIG FAT TEST");
+    strcat(file, "<tr>");
+    strcat(file, "<td>");
+	strcat(file, rows[i].class);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+	strcat(file, rows[i].instructor);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+	strcat(file, rows[i].size);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+	strcat(file, rows[i].c_quality);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+	strcat(file, rows[i].i_quality);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+	strcat(file, rows[i].difficulty);
+    strcat(file, "</td>");
+    strcat(file, "</tr>");
+	strcat(file, "<br>");
+//	strcat(file, line); //adding lines to the file.
    	i++;
     }
-printf("The modified file is %s: \n", file);
+    strcat(file, "</table>");
+//printf("The modified file is %s: \n", file);
 
 }
 
 void sort_1(row rows[], int num_lines){
+    printf("sort 1 is getting called");
     int i;
     int j;
     
@@ -91,11 +106,6 @@ void sort_1(row rows[], int num_lines){
         memcpy(&temp, &rows[j], sizeof(row));
         memcpy(&rows[j], &rows[j-1], sizeof(row));
         memcpy(&rows[j-1], &temp, sizeof(row));
-//		strcpy(temp, &rows[i].c_quality);
-//		strcpy(&rows[i].c_quality, &rows[i-1].c_quality);
-//		strcpy(&rows[i-1].c_quality, temp);
-//		i++;
-//		}
             j--;
         }
 	}
@@ -103,13 +113,11 @@ void sort_1(row rows[], int num_lines){
 
 //Insertion sort based on course difficulty
 void sort_2(row rows[], int num_lines){
+    printf("sort 2 is getting called");
     int i;
     int j;
-    
     for (i = 1; i < num_lines + 1; i++){
-        
         j = i - 1;
-        //        for(int j = num_lines -1 ; j > i; j--){
         while(j > 0 && atof(rows[j].difficulty) < atof(rows[j-1].difficulty)){
             //            printf("rows j c quality: %s should be less than rows -1 c quality which is: %s\n", rows[j].c_quality, rows[j-1].c_quality);
             //        if(atof(rows[i].c_quality) < atof(rows[i-1].c_quality)){
@@ -118,12 +126,7 @@ void sort_2(row rows[], int num_lines){
             memcpy(&temp, &rows[j], sizeof(row));
             memcpy(&rows[j], &rows[j-1], sizeof(row));
             memcpy(&rows[j-1], &temp, sizeof(row));
-            //		strcpy(temp, &rows[i].c_quality);
-            //		strcpy(&rows[i].c_quality, &rows[i-1].c_quality);
-            //		strcpy(&rows[i-1].c_quality, temp);
-            //		i++;
-            //		}
-            j--;
+             j--;
         }
     }
 
@@ -137,10 +140,11 @@ char* initialize(row rows[], int x, int num_lines){
 
    addHeader(html);  
 
-//   if (x == 1) filter_1();
-//   if (x == 2) filter_2();
-     if (x == 3) sort_1(rows, num_lines); //shouldn't make a copy
-//   if (x == 4) sort_2();	
+//     if (x == 1) filter_1();
+//     if (x == 2) filter_2();
+    
+     if (x == 3) sort_1(rows, num_lines);
+     if (x == 8) sort_2(rows, num_lines);
 
    addBreaks(rows, html, num_lines);
    addFooter(html);
@@ -201,7 +205,7 @@ int start_server(int PORT_NUMBER) {
 //  int http_index = 0;
 
 
-  char* cp = malloc(sizeof(char) * 40000);
+//  char* cp = malloc(sizeof(char) * 40000);
 
   //for the form
 ///////////////////////////////////////////////////////
@@ -210,22 +214,22 @@ int start_server(int PORT_NUMBER) {
 
       //x      int count_char = 0;
 
-  char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body>";
+//  char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body>";
 
       //     char* http_cp = {};
       //      strcpy(http_cp, http_before);
-  int b  = strlen( http_before );
+//  int b  = strlen( http_before );
   // printf("the string length of http_before is : %d\n", b);
 
-  int count_char = b;
+//  int count_char = b;
       // include the http_before text in malloc
 
 	//adding the header
-  int i = 0;
-  while (http_before[i] != '\0') {
-   cp[i] = http_before[i];
-   i++;
-  }
+//  int i = 0;
+//  while (http_before[i] != '\0') {
+//   cp[i] = http_before[i];
+//   i++;
+//  }
 // making the struct
   row* rows = malloc(sizeof(row) * 1000);
   char str_cpy[200];
@@ -267,15 +271,15 @@ int start_server(int PORT_NUMBER) {
 
     }
 
-    int str_len = strlen(str);
-    for (int i = 0;i < str_len;i++) {
-      cp[count_char + i] = str[i];
-    }
-    cp[count_char + str_len] = '<';
-    cp[count_char + str_len + 1] = 'b';
-    cp[count_char + str_len + 2] = 'r';
-    cp[count_char + str_len + 3] = '>';
-    count_char = count_char + str_len + 4;
+//   int str_len = strlen(str);
+//    for (int i = 0;i < str_len;i++) {
+//      cp[count_char + i] = str[i];
+//    }
+//    cp[count_char + str_len] = '<';
+//    cp[count_char + str_len + 1] = 'b';
+//    cp[count_char + str_len + 2] = 'r';
+//    cp[count_char + str_len + 3] = '>';
+//    count_char = count_char + str_len + 4;
 
 // go to the next line
     count_line++;
@@ -284,16 +288,16 @@ int start_server(int PORT_NUMBER) {
 
 
 
-  char after[] = "</body></html>";
-
-  int c = strlen(after);
-  printf("the string length after is : %d\n", c);
-  i = 0;
-
-  while(after[i] != '\0'){
-    cp[count_char + i] = after[i];
-   i++; 
-  }    
+//  char after[] = "</body></html>";
+//
+//  int c = strlen(after);
+//  printf("the string length after is : %d\n", c);
+//  i = 0;
+//
+//  while(after[i] != '\0'){
+//    cp[count_char + i] = after[i];
+//   i++; 
+//  }    
 
 //      puts(cp);
 
@@ -333,6 +337,7 @@ int start_server(int PORT_NUMBER) {
     char* str3 = "GET /index.html ";
     char* str4 = "GET /filter ";
     char* str5 = "GET /httpserver.c?category=sort ";
+    char* str8 = "Get /httpserver.c?category=sort2 ";
     int parse_flag = 0;
    /* walk through other tokens */
     while( token != NULL ) 
@@ -346,38 +351,57 @@ int start_server(int PORT_NUMBER) {
       else if (strncmp(str4, token, 12) == 0) {
         parse_flag = 2; // for filter
       }
-      else if (strncmp(str5, token, 10) == 0) {
+      else if (strncmp(str5, token, strlen(str5)) == 0) {
         parse_flag = 3; // for sort
       }
       else if (strncmp(str3, token, 16) == 0) {
         parse_flag = 4; // for index.html
       }
+      else if (strncmp(str8, token, strlen(str8)) == 0) {
+          parse_flag = 8; // for sort2
+      }
+        
 
       token = strtok(NULL, s);
     }
-      char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have <p>a <b>filter</b>.</html>";
+//      char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have <p>a <b>filter</b>.</html>";
 //    char *reply2 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have<p>a <b>sort</b>.</html>";
 //    char *reply3 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>index.html!</html>";
-      char* forms = "<html><form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
+//      char* forms = "<html><form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort on course quality<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
 //    char* forms2 = "</html>";
     // char dest[300];
-    strcat(cp, forms);
+//    strcat(cp, forms);
 //    strcat(cp2, cp);
 //    strcat(cp2, forms2);
 //////////////////////////////////////////////////////////////////////////
 
     //  send(fd, cp2, strlen(cp2), 0); 
         printf("count line before any of this is %d\n", count_line);
-    if (parse_flag == 1) send(fd, cp, strlen(cp), 0);   // this is for /all
-    if (parse_flag == 2) send(fd, reply, strlen(reply), 0);   // this is for filter
-    if (parse_flag == 3){	
-	   printf("got into the parse_flag 3 section\n");
-	   char* cp2 = initialize(rows, 3, count_line); //sort1
-	   if(cp2 == NULL) perror("the cp2 is null\n");
-	   send(fd, cp2, strlen(cp2), 0);}
+        if (parse_flag == 1) {
+            char* cp2 = initialize(rows, 1, count_line);
+            send(fd, cp2, strlen(cp2), 0);
+        }   // this is for /all
+        if (parse_flag == 2) {
+            char* cp2 = initialize(rows, 2, count_line);
+            send(fd, cp2, strlen(cp2), 0);
+        }// this is for filter
+        if (parse_flag == 3){
+            printf("got into the parse_flag 3 section \n");
+            char* cp2 = initialize(rows, 3, count_line); //sort1
+            if(cp2 == NULL) perror("the cp2 is null\n");
+            send(fd, cp2, strlen(cp2), 0);
+        }
+        //for index...
+        if(parse_flag == 4){
+            char* cp2 = initialize(rows, 4, count_line);
+            send(fd, cp2, strlen(cp2), 0);
+        }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-	// send(fd, reply2, strlen(reply2), 0);  // this is for sort
-    if (parse_flag == 4) send(fd, cp, strlen(cp), 0);
+        if (parse_flag == 8){
+            printf("about to initialize sort 2 \n");
+            char* cp2 = initialize(rows, 8, count_line); //sort2
+            send(fd, cp2, strlen(cp2), 0);
+        }
       // code in here to make index.html!
 
 
