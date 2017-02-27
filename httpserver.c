@@ -14,6 +14,7 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct Row{
   char class[50];
@@ -23,6 +24,285 @@ typedef struct Row{
   char i_quality[10];
   char difficulty[10];
 } row;
+ 
+// reverses a string 'str' of length 'len'
+void reverse(char *str, int len)
+{
+    int i=0, j=len-1, temp;
+    while (i<j)
+    {
+        temp = str[i];
+        str[i] = str[j];
+        str[j] = temp;
+        i++; 
+        j--;
+    }
+}
+ 
+ // Converts a given integer x to string str[].  d is the number
+ // of digits required in output. If d is more than the number
+ // of digits in x, then 0s are added at the beginning.
+int intToStr(int x, char str[], int d)
+{
+    int i = 0;
+    while (x)
+    {
+        str[i++] = (x%10) + '0';
+        x = x/10;
+    }
+ 
+    // If number of digits required is more, then
+    // add 0s at the beginning
+    while (i < d)
+        str[i++] = '0';
+ 
+    reverse(str, i);
+    str[i] = '\0';
+    return i;
+}
+
+// 
+void ftoa(float n, char *res, int afterpoint)
+{
+    // Extract integer part
+    int ipart = (int)n;
+ 
+    // Extract floating part
+    float fpart = n - (float)ipart;
+ 
+    // convert integer part to string
+    int i = intToStr(ipart, res, 0);
+ 
+    // check for display option after point
+    if (afterpoint != 0)
+    {
+        res[i] = '.';  // add dot
+ 
+        // Get the value of fraction part upto given no.
+        // of points after dot. The third parameter is needed
+        // to handle cases like 233.007
+        fpart = fpart * pow(10, afterpoint);
+ 
+        intToStr((int)fpart, res + i + 1, afterpoint);
+    }
+}
+
+void addHeader(char* file){
+  
+     char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body><form><b>Penn CS course Evalutaions</b><br>Sort by course quality : <input type=\"submit\" name=\"sort\" value=\"sort1\"><br>Sort by difficulty :   <input type=\"submit\" name=\"sort\" value=\"sort2\"></form> <br><form>filter by course_number or instructor : <br> <input type=\"text\" name=\"keyword\" value=\"\"> <input type=\"submit\" value=\"Submit\"> </form><br> <br><form> Average course difficulty :  <input type=\"submit\" name=\"average\" value=\"average1\"><br> Average instructor quality :   <input type=\"submit\" name=\"average\" value=\"average2\"><br></form>";
+     int i = 0;
+     while (http_before[i] != '\0') {
+     file[i] = http_before[i];
+     i++;
+     }
+}
+
+void addFooter(char* file){
+  
+  char after[] = "</body></html>";
+  strcat(file, after);
+
+}
+
+
+void addBreaks(row rows[], char* file, int num_lines){
+ //  int size = sizeof(rows);
+ //  int start_point = size/sizeof(rows);
+
+//probably also need to add ','
+    strcat(file, "<table>");
+    strcat(file, "<tr>");
+    strcat(file, "<td>");
+    strcat(file, "course number");
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, "instructor");
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, "class size");
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, "class quality");
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, "instructor quality");
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, "difficulty");
+    strcat(file, "</td>");
+    strcat(file, "</tr>");
+
+    for(int i = 0; i < num_lines; i++) {
+//      char* line = malloc(sizeof(char) * 1000);
+    strcat(file, "<tr>");
+    strcat(file, "<td>");
+    strcat(file, rows[i].class);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, rows[i].instructor);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, rows[i].size);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, rows[i].c_quality);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, rows[i].i_quality);
+    strcat(file, "</td>");
+    strcat(file, "<td>");
+    strcat(file, rows[i].difficulty);
+    strcat(file, "</td>");
+    strcat(file, "</tr>");
+//  strcat(file, line); //adding lines to the file.
+    }
+    strcat(file, "</table>");
+//printf("The modified file is %s: \n", file);
+
+}
+
+
+void sort_1(row rows[], int num_lines){
+    int i;
+    int j;
+    
+  for (i = 1; i < num_lines + 1; i++){
+        
+    j = i - 1;
+    while(j > 0 && atof(rows[j].c_quality) < atof(rows[j-1].c_quality)){
+      row temp;
+      memcpy(&temp, &rows[j], sizeof(row));
+      memcpy(&rows[j], &rows[j-1], sizeof(row));
+      memcpy(&rows[j-1], &temp, sizeof(row));
+      j--;
+    }
+  }
+}
+
+//Insertion sort based on course difficulty
+void sort_2(row rows[], int num_lines){
+  int i;
+  int j;
+    
+  for (i = 1; i < num_lines + 1; i++){        
+    j = i - 1;
+    while(j > 0 && atof(rows[j].difficulty) < atof(rows[j-1].difficulty)){
+      row temp;
+      memcpy(&temp, &rows[j], sizeof(row));
+      memcpy(&rows[j], &rows[j-1], sizeof(row));
+      memcpy(&rows[j-1], &temp, sizeof(row));
+      j--;
+    }
+  }
+}
+
+double average_cd(row rows[], int num_lines) {
+  double sum = 0.0;
+  for (int i = 0;i < num_lines;i++) {
+    sum += atof(rows[i].difficulty);
+  }
+  sum = sum / (double) num_lines;
+  return sum;
+}
+
+double average_iq(row rows[], int num_lines) {
+  double sum = 0.0;
+  for (int i = 0;i < num_lines;i++) {
+    sum += atof(rows[i].i_quality);
+  }
+  sum = sum / (double) num_lines;
+  return sum;
+}
+
+int filter_rows(row rows[], char* keyword, int num_lines) {
+  int row_count = 0;
+  int temp = 0;
+  // fixed that keywords turn spaces to +
+  while (keyword[temp] != '\0') {
+    if (keyword[temp] == '+') {
+      keyword[temp] = ' ';
+    }
+    temp++;
+  }
+  for (int i = 0;i < num_lines; i++) {
+    temp = 0;
+    char* class = rows[i].class;
+    char* inst = rows[i].instructor;
+    if (inst[0] == ' ') {
+      while (inst[temp] != '\0') {
+        inst[temp] = inst[temp + 1];
+        temp++;
+      }
+    }
+    if (strcmp(class, keyword) == 0 || strcmp(inst, keyword) == 0) {
+      rows[row_count] = rows[i];
+      row_count++;
+
+    }
+  }
+
+  puts(keyword);
+
+
+
+
+  return row_count;
+}
+
+int filter(row rows[], char* html, char* keyword, int num_lines) {
+  addHeader(html);
+  int num_l = num_lines;
+  num_l = filter_rows(rows, keyword, num_lines);
+
+  puts(keyword);
+  printf("num mathching the keyword : %d\n", num_l);
+
+
+  addBreaks(rows, html, num_l);
+  addFooter(html);
+  return 0;
+}
+
+
+//Insertion sort low to high based on
+int initialize(row rows[], char* html, int x, int num_lines){
+  int num_l = num_lines;
+  addHeader(html);
+  if (x == 2) { // sort course_quality
+    sort_1(rows, num_lines); 
+  } 
+  if (x == 3) { // sort Two
+    sort_2(rows, num_lines);
+  }
+  else if (x == 4) { // filter
+    // we will use another function for this
+  }
+  else if (x == 5) { // average course difficulty
+
+    strcat(html, "<br><br>");
+    strcat(html, "the average of course difficulty would be : ");
+    char temp_cp[20];
+    ftoa(average_cd(rows, num_lines), temp_cp, 5);
+    strcat(html, temp_cp);
+    strcat(html, "<br><br>");
+  }
+  else if (x == 6) { //average of instructor quality
+    strcat(html, "<br><br>");
+    strcat(html, "the average of instructor quality would be : ");
+    char temp_cp[20];
+    ftoa(average_iq(rows, num_lines), temp_cp, 5);
+    strcat(html, temp_cp);
+    strcat(html, "<br><br>");
+
+  }
+  
+  addBreaks(rows, html, num_l);
+
+  addFooter(html);
+  return 0;
+
+}
+
 
 int start_server(int PORT_NUMBER) {
 
@@ -64,6 +344,7 @@ int start_server(int PORT_NUMBER) {
   printf("\nServer configured to listen on port %d\n", PORT_NUMBER);
   fflush(stdout);
 
+  // opening file
   FILE* fp;
   char str[500];
   fp = fopen("course_evals.txt", "r");
@@ -72,35 +353,12 @@ int start_server(int PORT_NUMBER) {
    return -1;
   }
 
-  int http_index = 0;
-
-
-  char* cp = malloc(sizeof(char) * 40000);
-
   //for the form
   char* cp2 = malloc(sizeof(char) * 41000);
 
-
-      //x      int count_char = 0;
-
-  char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body>";
-
-      //     char* http_cp = {};
-      //      strcpy(http_cp, http_before);
-  int b  = strlen( http_before );
-  // printf("the string length of http_before is : %d\n", b);
-
-  int count_char = b;
-      // include the http_before text in malloc
-
-	//adding the header
-  int i = 0;
-  while (http_before[i] != '\0') {
-   cp[i] = http_before[i];
-   i++;
-  }
 // making the struct
   row* rows = malloc(sizeof(row) * 1000);
+  row* rows2 = malloc(sizeof(row) * 1000);
   char str_cpy[200];
   char* token;
   const char s[5] = ",\n";
@@ -121,7 +379,6 @@ int start_server(int PORT_NUMBER) {
       if (counter == 1) {
         strcpy(rows[count_line].instructor, token);
       }
-//		printf("instructor is: %s\n", rows[count_line].instructor);}
       if (counter == 2) {
         strcpy(rows[count_line].size, token);
       }
@@ -140,42 +397,11 @@ int start_server(int PORT_NUMBER) {
 
     }
 
-    int str_len = strlen(str);
-    for (int i = 0;i < str_len;i++) {
-      cp[count_char + i] = str[i];
-    }
-    cp[count_char + str_len] = '<';
-    cp[count_char + str_len + 1] = 'b';
-    cp[count_char + str_len + 2] = 'r';
-    cp[count_char + str_len + 3] = '>';
-    count_char = count_char + str_len + 4;
-
 // go to the next line
     count_line++;
 
   }     
 
-
-
-  char after[] = "</body></html>";
-
-  int c = strlen(after);
-  // printf("the string length after is : %d\n", c);
-  i = 0;
-
-  while(after[i] != '\0'){
-    cp[count_char + i] = after[i];
-    i++; 
-  }    
-
-//      puts(cp);
-
-// test code to print elements
-  // for (int i = 0;i < 100;i ++) {
-  //   printf("%s\n", rows[i].c_quality);
-  //   printf("%s\n", rows[i].instructor);
-
-  // }
 
   while (1) {
       // 4. accept: wait here until we get a connection on that port
@@ -200,14 +426,22 @@ int start_server(int PORT_NUMBER) {
 
     const char n[3] = "\n";
     char *token;
+    const int for_all = 0;
+    const int index_html = 1;
+    const int sort_cq = 2;
+    const int sort_dif = 3;
+    const int filtered = 4;
+    const int average_cd = 5;
+    const int average_iq = 6;
        /* get the first token */
     token = strtok(request, n);
-    char* str2 = "GET /all ";
+    char* str2 = "GET / ";
     char* str3 = "GET /index.html ";
-    char* str4 = "GET /httpserver.c?category=filter ";
-    char* str5 = "GET /httpserver.c?category=sort ";
-    char* str6 = "GET /httpserver.c?category=calculate ";
-    char* str7 = "GET /httpserver.c?keyword=";
+    char* str4 = "GET /?sort=sort1 ";
+    char* str5 = "GET /?sort=sort2 ";
+    char* str6 = "GET /?keyword=";
+    char* str7 = "GET /?average=average1 ";
+    char* str8 = "GET /?average=average2 ";
     int parse_flag = 0;
     char keyword[50];
     int keyword_index;
@@ -216,81 +450,77 @@ int start_server(int PORT_NUMBER) {
     {
       printf( "%s\n", token );
       if (strncmp(str2, token, strlen(str2)) == 0) {
-        parse_flag = 1; // for /all
-
-        // printf("this is where we should code !\n");
-        }
-      else if (strncmp(str4, token, strlen(str4)) == 0) {
-        parse_flag = 2; // for filter
-      }
-      else if (strncmp(str5, token, strlen(str5)) == 0) {
-        parse_flag = 3; // for sort
+        parse_flag = for_all; 
       }
       else if (strncmp(str3, token, strlen(str3)) == 0) {
-        parse_flag = 4; // for index.html
+        parse_flag = index_html; 
+      }
+      else if (strncmp(str4, token, strlen(str4)) == 0) {
+        parse_flag = sort_cq; 
+      }
+      else if (strncmp(str5, token, strlen(str5)) == 0) {
+        parse_flag = sort_dif; 
       } else if(strncmp(str6, token, strlen(str6)) == 0) {
-        parse_flag = 5; // for calculate
-      } else if (strncmp(str7, token, strlen(str7)) == 0) {
-        parse_flag = 6; // filtered!
+        parse_flag = filtered; 
         int k = 0;
-        keyword_index = strlen(str7);
-        while (token[keyword_index] != '\0') {
+        keyword_index = strlen(str6);
+        while (token[keyword_index] != ' ') {
           keyword[k] = token[keyword_index];
           keyword_index += 1;
           k++;
         }
+        keyword[k] = '\0';
+      } else if (strncmp(str7, token, strlen(str7)) == 0) {
+        parse_flag = average_cd; 
+      } else if (strncmp(str8, token, strlen(str8)) == 0) {
+        parse_flag = average_iq;
       }
- 
+
       token = strtok(NULL, s);
     }
-    char *reply = "<form >filter by keyword : <br> <input type=\"text\" name=\"keyword\" value=\"\"> <input type=\"submit\" value=\"Submit\"> <br> </form>";
-    char *reply2 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have<p>a <b>sort</b>.</html>";
-    char *reply3 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>calculate!</html>";
-    char* forms = "<html><form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
-    char* forms2 = "</html>";
-    // char dest[300];
 
-    memset(&cp2[0], '\0', sizeof(cp2));
-
+    memset(&cp2[0], '\0', 41000);
+    memcpy(rows2, rows, sizeof(row) * 1000);
      // send(fd, cp2, strlen(cp2), 0); 
 
-    if (parse_flag == 1) send(fd, cp, strlen(cp), 0);   // this is for /all
-    if (parse_flag == 2){
-      strcat(cp2, forms);
-      strcat(cp2, reply);
-      strcat(cp2, cp);
-      strcat(cp2, forms2);
-      send(fd, cp2, strlen(cp2), 0);// for index.html
-
-      // send(fd, reply, strlen(reply), 0);   // this is for filter
+    if (parse_flag == for_all) {
+      initialize(rows, cp2, 0, count_line);
+      send(fd, cp2, strlen(cp2), 0);
     } 
-    if (parse_flag == 3) {
-      strcat(cp2, forms);
-      strcat(cp2, reply);
-      // strcat(cp2, cp);
-      strcat(cp2, forms2);
-      send(fd, cp2, strlen(cp2), 0);
-    } // this is for sort
-    if (parse_flag == 4) {
-      strcat(cp2, forms);
-      strcat(cp2, cp);
-      strcat(cp2, forms2);
-      send(fd, cp2, strlen(cp2), 0);// for index.html
-    }
-    if (parse_flag == 5) send(fd, reply3, strlen(reply3), 0); // calculation
-    if (parse_flag == 6) {
-      strcat(cp2, forms);
-      strcat(cp2, &keyword);
-      strcat(cp2, forms2);
-      send(fd, cp2, strlen(cp2), 0);
-    }
-      // code in here to make index.html!
 
+    else if (parse_flag == index_html) {
+      initialize(rows, cp2, 1, count_line);
+      send(fd, cp2, strlen(cp2), 0);
+    }
+
+    else if (parse_flag == sort_cq) {
+      initialize(rows, cp2, 2, count_line);
+      send(fd, cp2, strlen(cp2), 0);
+    }
+
+    else if (parse_flag == sort_dif) {
+      initialize(rows, cp2, 3, count_line);
+      send(fd, cp2, strlen(cp2), 0);
+    }
+
+    else if (parse_flag == filtered) {
+      filter(rows2, cp2, &keyword[0], count_line);
+      send(fd, cp2, strlen(cp2), 0);
+    }
+
+    else if (parse_flag == average_cd) {
+      initialize(rows, cp2, 5, count_line);
+      send(fd, cp2, strlen(cp2), 0);
+    }
+
+    else if (parse_flag == average_iq) {
+      initialize(rows, cp2, 6, count_line);
+      send(fd, cp2, strlen(cp2), 0);
+    }
 
 	// 6. send: send the outgoing message (response) over the socket
 	// note that the second argument is a char*, and the third is the number of chars	
-	//	send(fd, reply, strlen(reply), 0);
-    // send(fd, cp, strlen(cp), 0);
+
 
 	// 7. close: close the connection
     close(fd);
