@@ -5,6 +5,7 @@ and
 http://www.binarii.com/files/papers/c_sockets.txt
  */
 
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -15,6 +16,10 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <pthread.h>
+
+pthread_mutex_t lock;
+int is_quit = 0;
 
 typedef struct Row{
   char class[50];
@@ -61,7 +66,7 @@ int intToStr(int x, char str[], int d)
     return i;
 }
 
-// 
+//float to integer 
 void ftoa(float n, char *res, int afterpoint)
 {
     // Extract integer part
@@ -87,6 +92,7 @@ void ftoa(float n, char *res, int afterpoint)
     }
 }
 
+// 
 void addHeader(char* file){
   
      char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body><form><b>Penn CS course Evalutaions</b><br>Sort by course quality : <input type=\"submit\" name=\"sort\" value=\"sort1\"><br>Sort by difficulty :   <input type=\"submit\" name=\"sort\" value=\"sort2\"></form> <br><form>filter by course_number or instructor : <br> <input type=\"text\" name=\"keyword\" value=\"\"> <input type=\"submit\" value=\"Submit\"> </form><br> <br><form> Average course difficulty :  <input type=\"submit\" name=\"average\" value=\"average1\"><br> Average instructor quality :   <input type=\"submit\" name=\"average\" value=\"average2\"><br></form>";
@@ -196,6 +202,7 @@ void sort_2(row rows[], int num_lines){
   }
 }
 
+// function to average course difficulty
 double average_cd(row rows[], int num_lines) {
   double sum = 0.0;
   for (int i = 0;i < num_lines;i++) {
@@ -205,6 +212,7 @@ double average_cd(row rows[], int num_lines) {
   return sum;
 }
 
+// function to average instructor quatlity
 double average_iq(row rows[], int num_lines) {
   double sum = 0.0;
   for (int i = 0;i < num_lines;i++) {
@@ -228,6 +236,7 @@ int filter_rows(row rows[], char* keyword, int num_lines) {
     temp = 0;
     char* class = rows[i].class;
     char* inst = rows[i].instructor;
+    // if instructors have an indentation, delete the indentation
     if (inst[0] == ' ') {
       while (inst[temp] != '\0') {
         inst[temp] = inst[temp + 1];
@@ -282,7 +291,7 @@ int initialize(row rows[], char* html, int x, int num_lines){
     strcat(html, "<br><br>");
     strcat(html, "the average of course difficulty would be : ");
     char temp_cp[20];
-    ftoa(average_cd(rows, num_lines), temp_cp, 5);
+    ftoa(average_cd(rows, num_lines), temp_cp, 2);
     strcat(html, temp_cp);
     strcat(html, "<br><br>");
   }
@@ -290,7 +299,7 @@ int initialize(row rows[], char* html, int x, int num_lines){
     strcat(html, "<br><br>");
     strcat(html, "the average of instructor quality would be : ");
     char temp_cp[20];
-    ftoa(average_iq(rows, num_lines), temp_cp, 5);
+    ftoa(average_iq(rows, num_lines), temp_cp, 2);
     strcat(html, temp_cp);
     strcat(html, "<br><br>");
 
@@ -304,7 +313,32 @@ int initialize(row rows[], char* html, int x, int num_lines){
 }
 
 
+void* quit(void* p) {
+  char c;
+  while (1) {
+    c = getchar();
+    if (c == 'q') {
+      // global flag to quit;
+      pthread_mutex_lock(&lock);
+      is_quit = 1;
+      pthread_mutex_unlock(&lock);
+    }
+  }
+  return p;
+}
+
 int start_server(int PORT_NUMBER) {
+
+  pthread_t t1;
+  int r2 = 0;
+  int r1 = 0;
+
+  r1 = pthread_create(&t1, NULL, &quit, &r2);
+
+  if (r1 != 0) {
+    puts("thread not created nicely");
+  }
+  
 
       // structs to represent the server and client
   struct sockaddr_in server_addr,client_addr;    
@@ -403,7 +437,10 @@ int start_server(int PORT_NUMBER) {
   }     
 
 
+  
+
   while (1) {
+
       // 4. accept: wait here until we get a connection on that port
     int sin_size = sizeof(struct sockaddr_in);
     int fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
@@ -525,6 +562,12 @@ int start_server(int PORT_NUMBER) {
 	// 7. close: close the connection
     close(fd);
     printf("Server closed connection\n");
+    }
+    pthread_mutex_lock(&lock);
+    int temp_is_quit = is_quit;
+    pthread_mutex_unlock(&lock);
+    if (temp_is_quit == 1) {
+      break;
     }
   }
       // 8. close: close the socket
