@@ -207,7 +207,10 @@ int start_server(int PORT_NUMBER) {
     char* str4 = "GET /httpserver.c?category=filter ";
     char* str5 = "GET /httpserver.c?category=sort ";
     char* str6 = "GET /httpserver.c?category=calculate ";
+    char* str7 = "GET /httpserver.c?keyword=";
     int parse_flag = 0;
+    char keyword[50];
+    int keyword_index;
    /* walk through other tokens */
     while( token != NULL ) 
     {
@@ -227,29 +230,60 @@ int start_server(int PORT_NUMBER) {
         parse_flag = 4; // for index.html
       } else if(strncmp(str6, token, strlen(str6)) == 0) {
         parse_flag = 5; // for calculate
+      } else if (strncmp(str7, token, strlen(str7)) == 0) {
+        parse_flag = 6; // filtered!
+        int k = 0;
+        keyword_index = strlen(str7);
+        while (token[keyword_index] != '\0') {
+          keyword[k] = token[keyword_index];
+          keyword_index += 1;
+          k++;
+        }
       }
-
+ 
       token = strtok(NULL, s);
     }
-    char *reply = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<!DOCTYPE html><html><body><form >filter by course instructor : <br> <input type=\"text\" name=\"instructor\" value=\"\"> <input type=\"submit\" value=\"Submit\"> <br> </form> <form> filter by course id : <br> <input type=\"text\" name=\"course_id\" value=\"\"> <input type=\"submit\" value=\"Submit\"> <br>  </form>  </body> </html> ";
+    char *reply = "<form >filter by keyword : <br> <input type=\"text\" name=\"keyword\" value=\"\"> <input type=\"submit\" value=\"Submit\"> <br> </form>";
     char *reply2 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>This page should have<p>a <b>sort</b>.</html>";
     char *reply3 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<html>calculate!</html>";
     char* forms = "<html><form action=\"httpserver.c\" method=\"get\"><input type=\"radio\" name=\"category\" value=\"sort\" checked>sort<br><input type=\"radio\" name=\"category\" value=\"filter\"> filter<br><input type=\"radio\" name=\"category\" value=\"calculate\"> calculate<br><input type=\"submit\" value=\"Submit\"></form>";
     char* forms2 = "</html>";
     // char dest[300];
-    strcat(cp2, forms);
-    strcat(cp2, cp);
-    strcat(cp2, forms2);
+
+    memset(&cp2[0], '\0', sizeof(cp2));
 
      // send(fd, cp2, strlen(cp2), 0); 
 
     if (parse_flag == 1) send(fd, cp, strlen(cp), 0);   // this is for /all
     if (parse_flag == 2){
-      send(fd, reply, strlen(reply), 0);   // this is for filter
+      strcat(cp2, forms);
+      strcat(cp2, reply);
+      strcat(cp2, cp);
+      strcat(cp2, forms2);
+      send(fd, cp2, strlen(cp2), 0);// for index.html
+
+      // send(fd, reply, strlen(reply), 0);   // this is for filter
     } 
-    if (parse_flag == 3) send(fd, reply2, strlen(reply2), 0);  // this is for sort
-    if (parse_flag == 4) send(fd, cp2, strlen(cp2), 0);// for index.html
+    if (parse_flag == 3) {
+      strcat(cp2, forms);
+      strcat(cp2, reply);
+      // strcat(cp2, cp);
+      strcat(cp2, forms2);
+      send(fd, cp2, strlen(cp2), 0);
+    } // this is for sort
+    if (parse_flag == 4) {
+      strcat(cp2, forms);
+      strcat(cp2, cp);
+      strcat(cp2, forms2);
+      send(fd, cp2, strlen(cp2), 0);// for index.html
+    }
     if (parse_flag == 5) send(fd, reply3, strlen(reply3), 0); // calculation
+    if (parse_flag == 6) {
+      strcat(cp2, forms);
+      strcat(cp2, &keyword);
+      strcat(cp2, forms2);
+      send(fd, cp2, strlen(cp2), 0);
+    }
       // code in here to make index.html!
 
 
