@@ -205,6 +205,15 @@ double average_cd(row rows[], int num_lines) {
   return sum;
 }
 
+double average_iq(row rows[], int num_lines) {
+  double sum = 0.0;
+  for (int i = 0;i < num_lines;i++) {
+    sum += atof(rows[i].i_quality);
+  }
+  sum = sum / (double) num_lines;
+  return sum;
+}
+
 
 //Insertion sort low to high based on
 int initialize(row rows[], char* html, int x, int num_lines){
@@ -220,14 +229,21 @@ int initialize(row rows[], char* html, int x, int num_lines){
 
   }
   else if (x == 5) { // average course difficulty
+
     strcat(html, "<br><br>");
     strcat(html, "the average of course difficulty would be : ");
-    // char temp_cp[20];
-    // ftoa(average_cd(rows, num_lines), temp_cp, 5);
-    // strcat(html, temp_cp);
+    char temp_cp[20];
+    ftoa(average_cd(rows, num_lines), temp_cp, 5);
+    strcat(html, temp_cp);
     strcat(html, "<br><br>");
   }
-  else if (x == 6) {
+  else if (x == 6) { //average of instructor quality
+    strcat(html, "<br><br>");
+    strcat(html, "the average of instructor quality would be : ");
+    char temp_cp[20];
+    ftoa(average_iq(rows, num_lines), temp_cp, 5);
+    strcat(html, temp_cp);
+    strcat(html, "<br><br>");
 
   }
   
@@ -443,12 +459,12 @@ int start_server(int PORT_NUMBER) {
 
     else if (parse_flag == average_cd) {
       initialize(rows, cp2, 5, count_line);
-      send(fd, cp2, strlen(cp2), count_line);
+      send(fd, cp2, strlen(cp2), 0);
     }
 
     else if (parse_flag == average_iq) {
       initialize(rows, cp2, 6, count_line);
-      send(fd, cp2, strlen(cp2), count_line);
+      send(fd, cp2, strlen(cp2), 0);
     }
 
 	// 6. send: send the outgoing message (response) over the socket
