@@ -36,7 +36,7 @@ void addHeader(char* file){
     strcat(file, forms);
 
     
-     char table[] = "<table><tr><th>Course Name</th><th>Instructor Name</th><th>Class Size</th><th>Course Quality</th><th>Instructor Quality</th><th>Difficulty</th>";
+     char table[] = "<table><tr><th>Course Name</th><th>Instructor Name</th><th>Class Size</th><th>Course Quality</th><th>Instructor Quality</th><th>Difficulty</th></tr>";
     
     strcat(file, table);
     
@@ -44,7 +44,6 @@ void addHeader(char* file){
 
 void addFooter(char* file){
 	
-  	
   char after[] = "</body></html>";
   strcat(file, after);
 
@@ -58,8 +57,7 @@ void addBreaks(row rows[], char* file, int num_lines){
 
 //probably also need to add ','
    for(i = 0; i < num_lines; i++) {
-//      char* line = malloc(sizeof(char) * 1000);
-       strcat(file, "THIS IS A BIG FAT TEST");
+    strcat(file, "THIS IS A BIG FAT TEST");
     strcat(file, "<tr>");
     strcat(file, "<td>");
 	strcat(file, rows[i].class);
