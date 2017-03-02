@@ -115,7 +115,6 @@ void addBreaks(row rows[], char* file, int num_lines){
  //  int size = sizeof(rows);
  //  int start_point = size/sizeof(rows);
 
-//probably also need to add ','
     strcat(file, "<table>");
     strcat(file, "<tr>");
     strcat(file, "<td>");
@@ -139,7 +138,6 @@ void addBreaks(row rows[], char* file, int num_lines){
     strcat(file, "</tr>");
 
     for(int i = 0; i < num_lines; i++) {
-//      char* line = malloc(sizeof(char) * 1000);
     strcat(file, "<tr>");
     strcat(file, "<td>");
     strcat(file, rows[i].class);
@@ -160,10 +158,8 @@ void addBreaks(row rows[], char* file, int num_lines){
     strcat(file, rows[i].difficulty);
     strcat(file, "</td>");
     strcat(file, "</tr>");
-//  strcat(file, line); //adding lines to the file.
     }
     strcat(file, "</table>");
-//printf("The modified file is %s: \n", file);
 
 }
 
@@ -447,6 +443,7 @@ int start_server(int PORT_NUMBER) {
     if (fd != -1) {
       printf("Server got a connection from (%s, %d)\n", inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
 
+
 	// buffer to read data into
     char request[1024];
 
@@ -573,6 +570,10 @@ int start_server(int PORT_NUMBER) {
       // 8. close: close the socket
   close(sock);
   printf("Server shutting down\n");
+
+  free(cp2);
+  free(rows2);
+  free(rows);
 
   return 0;
 

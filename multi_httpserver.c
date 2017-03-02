@@ -5,6 +5,7 @@ and
 http://www.binarii.com/files/papers/c_sockets.txt
  */
 
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -15,6 +16,13 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <pthread.h>
+
+void* parse_and_send(void* fd);
+
+pthread_mutex_t lock;
+int is_quit = 0;
+int count_line = 0;
 
 typedef struct Row{
   char class[50];
@@ -24,6 +32,10 @@ typedef struct Row{
   char i_quality[10];
   char difficulty[10];
 } row;
+
+char* cp2;
+row* rows;
+row* rows2;
  
 // reverses a string 'str' of length 'len'
 void reverse(char *str, int len)
@@ -61,7 +73,7 @@ int intToStr(int x, char str[], int d)
     return i;
 }
 
-// 
+//float to integer 
 void ftoa(float n, char *res, int afterpoint)
 {
     // Extract integer part
@@ -87,9 +99,10 @@ void ftoa(float n, char *res, int afterpoint)
     }
 }
 
+// 
 void addHeader(char* file){
   
-     char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body><form><b>Penn CS course Evalutaions</b><br>Sort by course quality : <input type=\"submit\" name=\"sort\" value=\"sort1\"><br>Sort by difficulty :   <input type=\"submit\" name=\"sort\" value=\"sort2\"></form> <br><form>filter by keyword : <br> <input type=\"text\" name=\"keyword\" value=\"\"> <input type=\"submit\" value=\"Submit\"> </form><br> <br><form> Average course difficulty :  <input type=\"submit\" name=\"average\" value=\"average1\"><br> Average instructor quality :   <input type=\"submit\" name=\"average\" value=\"average2\"><br></form>";
+     char http_before[] = "<!DOCTYPE HTML><html><head><title>project1</title></head><body><form><b>Penn CS course Evalutaions</b><br>Sort by course quality : <input type=\"submit\" name=\"sort\" value=\"sort1\"><br>Sort by difficulty :   <input type=\"submit\" name=\"sort\" value=\"sort2\"></form> <br><form>filter by course_number or instructor : <br> <input type=\"text\" name=\"keyword\" value=\"\"> <input type=\"submit\" value=\"Submit\"> </form><br> <br><form> Average course difficulty :  <input type=\"submit\" name=\"average\" value=\"average1\"><br> Average instructor quality :   <input type=\"submit\" name=\"average\" value=\"average2\"><br></form>";
      int i = 0;
      while (http_before[i] != '\0') {
      file[i] = http_before[i];
@@ -133,7 +146,6 @@ void addBreaks(row rows[], char* file, int num_lines){
     strcat(file, "</tr>");
 
     for(int i = 0; i < num_lines; i++) {
-//      char* line = malloc(sizeof(char) * 1000);
     strcat(file, "<tr>");
     strcat(file, "<td>");
     strcat(file, rows[i].class);
@@ -168,14 +180,14 @@ void sort_1(row rows[], int num_lines){
     
   for (i = 1; i < num_lines + 1; i++){
         
-        j = i - 1;
-        while(j > 0 && atof(rows[j].c_quality) < atof(rows[j-1].c_quality)){
-    row temp;
-        memcpy(&temp, &rows[j], sizeof(row));
-        memcpy(&rows[j], &rows[j-1], sizeof(row));
-        memcpy(&rows[j-1], &temp, sizeof(row));
-        j--;
-      }
+    j = i - 1;
+    while(j > 0 && atof(rows[j].c_quality) < atof(rows[j-1].c_quality)){
+      row temp;
+      memcpy(&temp, &rows[j], sizeof(row));
+      memcpy(&rows[j], &rows[j-1], sizeof(row));
+      memcpy(&rows[j-1], &temp, sizeof(row));
+      j--;
+    }
   }
 }
 
@@ -196,6 +208,7 @@ void sort_2(row rows[], int num_lines){
   }
 }
 
+// function to average course difficulty
 double average_cd(row rows[], int num_lines) {
   double sum = 0.0;
   for (int i = 0;i < num_lines;i++) {
@@ -205,6 +218,7 @@ double average_cd(row rows[], int num_lines) {
   return sum;
 }
 
+// function to average instructor quatlity
 double average_iq(row rows[], int num_lines) {
   double sum = 0.0;
   for (int i = 0;i < num_lines;i++) {
@@ -212,6 +226,54 @@ double average_iq(row rows[], int num_lines) {
   }
   sum = sum / (double) num_lines;
   return sum;
+}
+
+int filter_rows(row rows[], char* keyword, int num_lines) {
+  int row_count = 0;
+  int temp = 0;
+  // fixed that keywords turn spaces to +
+  while (keyword[temp] != '\0') {
+    if (keyword[temp] == '+') {
+      keyword[temp] = ' ';
+    }
+    temp++;
+  }
+  for (int i = 0;i < num_lines; i++) {
+    temp = 0;
+    char* class = rows[i].class;
+    char* inst = rows[i].instructor;
+    // if instructors have an indentation, delete the indentation
+    if (inst[0] == ' ') {
+      while (inst[temp] != '\0') {
+        inst[temp] = inst[temp + 1];
+        temp++;
+      }
+    }
+    if (strcmp(class, keyword) == 0 || strcmp(inst, keyword) == 0) {
+      rows[row_count] = rows[i];
+      row_count++;
+
+    }
+  }
+
+  puts(keyword);
+
+
+
+
+  return row_count;
+}
+
+int filter(row rows[], char* html, char* keyword, int num_lines) {
+  addHeader(html);
+  int num_l = num_lines;
+  num_l = filter_rows(rows, keyword, num_lines);
+
+  puts(keyword);
+  printf("num mathching the keyword : %d\n", num_l);
+  addBreaks(rows, html, num_l);
+  addFooter(html);
+  return 0;
 }
 
 
@@ -226,22 +288,23 @@ int initialize(row rows[], char* html, int x, int num_lines){
     sort_2(rows, num_lines);
   }
   else if (x == 4) { // filter
-
+    // we will use another function for this
   }
   else if (x == 5) { // average course difficulty
 
     strcat(html, "<br><br>");
     strcat(html, "the average of course difficulty would be : ");
     char temp_cp[20];
-    ftoa(average_cd(rows, num_lines), temp_cp, 5);
+    ftoa(average_cd(rows, num_lines), temp_cp, 2);
     strcat(html, temp_cp);
     strcat(html, "<br><br>");
   }
   else if (x == 6) { //average of instructor quality
+    sleep(10);
     strcat(html, "<br><br>");
     strcat(html, "the average of instructor quality would be : ");
     char temp_cp[20];
-    ftoa(average_iq(rows, num_lines), temp_cp, 5);
+    ftoa(average_iq(rows, num_lines), temp_cp, 2);
     strcat(html, temp_cp);
     strcat(html, "<br><br>");
 
@@ -255,7 +318,32 @@ int initialize(row rows[], char* html, int x, int num_lines){
 }
 
 
+void* quit(void* p) {
+  char c;
+  while (1) {
+    c = getchar();
+    if (c == 'q') {
+      // global flag to quit;
+      pthread_mutex_lock(&lock);
+      is_quit = 1;
+      pthread_mutex_unlock(&lock);
+    }
+  }
+  return p;
+}
+
 int start_server(int PORT_NUMBER) {
+
+  pthread_t t1;
+  int r2 = 0;
+  int r1 = 0;
+
+  r1 = pthread_create(&t1, NULL, &quit, &r2);
+
+  if (r1 != 0) {
+    puts("thread not created nicely");
+  }
+  
 
       // structs to represent the server and client
   struct sockaddr_in server_addr,client_addr;    
@@ -305,15 +393,16 @@ int start_server(int PORT_NUMBER) {
   }
 
   //for the form
-  char* cp2 = malloc(sizeof(char) * 41000);
+  cp2 = malloc(sizeof(char) * 41000);
 
 // making the struct
-  row* rows = malloc(sizeof(row) * 1000);
+  rows = malloc(sizeof(row) * 1000);
+  rows2 = malloc(sizeof(row) * 1000);
   char str_cpy[200];
   char* token;
   const char s[5] = ",\n";
 
-  int count_line = 0; 
+  count_line = 0; 
   while (fgets(str, 80, fp) != NULL) {
 	//	        puts(str);  // test code
 
@@ -353,26 +442,62 @@ int start_server(int PORT_NUMBER) {
   }     
 
 
+  
+
   while (1) {
+
       // 4. accept: wait here until we get a connection on that port
     int sin_size = sizeof(struct sockaddr_in);
     int fd = accept(sock, (struct sockaddr *)&client_addr,(socklen_t *)&sin_size);
     if (fd != -1) {
       printf("Server got a connection from (%s, %d)\n", inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
 
-	// buffer to read data into
+      printf("This is the file descriptor : %d\n", fd);
+      printf("This is the file descriptor : %d\n", fd);
+
+
+    pthread_t t;
+    int r3 = 0;
+
+    r3 = pthread_create(&t, NULL, &parse_and_send, &fd);
+
+    pthread_mutex_lock(&lock);
+    int temp_is_quit = is_quit;
+    pthread_mutex_unlock(&lock);
+      if (temp_is_quit == 1) {
+        break;
+      }
+    }
+  }
+      // 8. close: close the socket
+  close(sock);
+  printf("Server shutting down\n");
+
+  // free(cp2);
+  // free(rows2);
+  // free(rows);
+
+  return 0;
+
+}
+
+
+void* parse_and_send(void* fdp) {
+    int fd = *(int*) fdp;
+
+    // buffer to read data into
     char request[1024];
 
-	// 5. recv: read incoming message (request) into buffer
+  // 5. recv: read incoming message (request) into buffer
     int bytes_received = recv(fd,request,1024,0);
-	// null-terminate the string
+  // null-terminate the string
     request[bytes_received] = '\0';
-	// print it to standard out
+  // print it to standard out
 
      printf("This is the incoming request:\n%s\n", request);
 
-	//here is where we will parse and perform logic based on the type of request
-	// this is the message that we'll send back
+  //here is where we will parse and perform logic based on the type of request
+  // this is the message that we'll send back
 
     const char n[3] = "\n";
     char *token;
@@ -396,6 +521,8 @@ int start_server(int PORT_NUMBER) {
     char keyword[50];
     int keyword_index;
    /* walk through other tokens */
+    const char s[5] = ",\n";
+
     while( token != NULL ) 
     {
       printf( "%s\n", token );
@@ -426,10 +553,11 @@ int start_server(int PORT_NUMBER) {
         parse_flag = average_iq;
       }
 
-      token = strtok(NULL, s);
+      token = strtok(NULL, s); //
     }
 
     memset(&cp2[0], '\0', 41000);
+    memcpy(rows2, rows, sizeof(row) * 1000);
      // send(fd, cp2, strlen(cp2), 0); 
 
     if (parse_flag == for_all) {
@@ -453,7 +581,7 @@ int start_server(int PORT_NUMBER) {
     }
 
     else if (parse_flag == filtered) {
-      initialize(rows, cp2, 4, count_line);
+      filter(rows2, cp2, &keyword[0], count_line);
       send(fd, cp2, strlen(cp2), 0);
     }
 
@@ -467,23 +595,14 @@ int start_server(int PORT_NUMBER) {
       send(fd, cp2, strlen(cp2), 0);
     }
 
-	// 6. send: send the outgoing message (response) over the socket
-	// note that the second argument is a char*, and the third is the number of chars	
+  // 6. send: send the outgoing message (response) over the socket
+  // note that the second argument is a char*, and the third is the number of chars 
 
 
-	// 7. close: close the connection
+  // 7. close: close the connection
     close(fd);
     printf("Server closed connection\n");
-    }
-  }
-      // 8. close: close the socket
-  close(sock);
-  printf("Server shutting down\n");
-
-  return 0;
-
 }
-
 
 
 
