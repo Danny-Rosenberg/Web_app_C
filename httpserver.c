@@ -18,8 +18,12 @@ http://www.binarii.com/files/papers/c_sockets.txt
 #include <math.h>
 #include <pthread.h>
 
+void* parse_and_send(void* fd);
+
 pthread_mutex_t lock;
 int is_quit = 0;
+int count_line = 0;
+int fd;
 
 typedef struct Row{
   char class[50];
@@ -29,7 +33,19 @@ typedef struct Row{
   char i_quality[10];
   char difficulty[10];
 } row;
- 
+
+char* cp;
+char* cp2;
+char* cp3;
+char* cp4;
+char* cp5;
+char* cp6;
+row* rows;
+row* rows2;
+int c = 0;
+
+
+// convert floating point number to string in C code from http://www.geeksforgeeks.org/convert-floating-point-number-string/ 
 // reverses a string 'str' of length 'len'
 void reverse(char *str, int len)
 {
@@ -112,9 +128,8 @@ void addFooter(char* file){
 
 
 void addBreaks(row rows[], char* file, int num_lines){
- //  int size = sizeof(rows);
- //  int start_point = size/sizeof(rows);
 
+//probably also need to add ','
     strcat(file, "<table>");
     strcat(file, "<tr>");
     strcat(file, "<td>");
@@ -158,8 +173,10 @@ void addBreaks(row rows[], char* file, int num_lines){
     strcat(file, rows[i].difficulty);
     strcat(file, "</td>");
     strcat(file, "</tr>");
+//  strcat(file, line); //adding lines to the file.
     }
     strcat(file, "</table>");
+//printf("The modified file is %s: \n", file);
 
 }
 
@@ -255,14 +272,16 @@ int filter_rows(row rows[], char* keyword, int num_lines) {
 }
 
 int filter(row rows[], char* html, char* keyword, int num_lines) {
+
+
   addHeader(html);
   int num_l = num_lines;
   num_l = filter_rows(rows, keyword, num_lines);
 
+
+
   puts(keyword);
   printf("num mathching the keyword : %d\n", num_l);
-
-
   addBreaks(rows, html, num_l);
   addFooter(html);
   return 0;
@@ -384,16 +403,21 @@ int start_server(int PORT_NUMBER) {
   }
 
   //for the form
-  char* cp2 = malloc(sizeof(char) * 41000);
+  cp = malloc(sizeof(char) * 500000);
+  cp2 = malloc(sizeof(char) * 500000);
+  cp3 = malloc(sizeof(char) * 500000);
+  cp4 = malloc(sizeof(char) * 500000);
+  cp5 = malloc(sizeof(char) * 500000);
+  cp6 = malloc(sizeof(char) * 500000);
 
 // making the struct
-  row* rows = malloc(sizeof(row) * 1000);
-  row* rows2 = malloc(sizeof(row) * 1000);
+  rows = malloc(sizeof(row) * 1000);
+  rows2 = malloc(sizeof(row) * 1000);
   char str_cpy[200];
   char* token;
   const char s[5] = ",\n";
 
-  int count_line = 0; 
+  count_line = 0; 
   while (fgets(str, 80, fp) != NULL) {
 	//	        puts(str);  // test code
 
@@ -433,8 +457,25 @@ int start_server(int PORT_NUMBER) {
   }     
 
 
-  
+  initialize(rows, cp, 0, count_line);
 
+
+  initialize(rows, cp2, 2, count_line);
+
+
+  initialize(rows, cp3, 3, count_line);
+
+
+  // filter(rows2, cp4, &keyword[0], count_line);;
+
+
+  initialize(rows, cp5, 5, count_line);
+
+
+  initialize(rows, cp6, 6, count_line);
+
+
+  int* a = malloc(sizeof(int) * 10);
   while (1) {
 
       // 4. accept: wait here until we get a connection on that port
@@ -444,19 +485,62 @@ int start_server(int PORT_NUMBER) {
       printf("Server got a connection from (%s, %d)\n", inet_ntoa(client_addr.sin_addr),ntohs(client_addr.sin_port));
 
 
-	// buffer to read data into
+    pthread_t t;
+    // int ab = 0;
+    int r3 = 0;
+    a[c] = fd; 
+     // pthread_mutex_lock(&lock);
+     // pthread_mutex_unlock(&lock);
+    r3 = pthread_create(&t, NULL, &parse_and_send, &a[c]);
+
+     if (c == 9) c = 0;
+     c++;
+    // void* fdm = *fdmal;
+
+    // free(fdm);
+
+    pthread_mutex_lock(&lock);
+    int temp_is_quit = is_quit;
+    pthread_mutex_unlock(&lock);
+      if (temp_is_quit == 1) {
+        break;
+      }
+    }
+  }
+  
+  pthread_join(t1, NULL); 
+
+     // 8. close: close the socket
+  close(sock);
+  printf("Server shutting down\n");
+
+  free(cp2);
+  free(rows2);
+  free(rows);
+
+  return 0;
+
+}
+
+
+void* parse_and_send(void* fdp) {
+
+    int fd = *(int*) fdp;
+    printf("%d\n", fd);
+
+    // buffer to read data into
     char request[1024];
 
-	// 5. recv: read incoming message (request) into buffer
+  // 5. recv: read incoming message (request) into buffer
     int bytes_received = recv(fd,request,1024,0);
-	// null-terminate the string
+  // null-terminate the string
     request[bytes_received] = '\0';
-	// print it to standard out
+  // print it to standard out
 
      printf("This is the incoming request:\n%s\n", request);
 
-	//here is where we will parse and perform logic based on the type of request
-	// this is the message that we'll send back
+  //here is where we will parse and perform logic based on the type of request
+  // this is the message that we'll send back
 
     const char n[3] = "\n";
     char *token;
@@ -480,6 +564,8 @@ int start_server(int PORT_NUMBER) {
     char keyword[50];
     int keyword_index;
    /* walk through other tokens */
+    const char s[5] = ",\n";
+
     while( token != NULL ) 
     {
       printf( "%s\n", token );
@@ -510,75 +596,63 @@ int start_server(int PORT_NUMBER) {
         parse_flag = average_iq;
       }
 
-      token = strtok(NULL, s);
+      token = strtok(NULL, s); //
     }
 
-    memset(&cp2[0], '\0', 41000);
+    // memset(&cp2[0], '\0', 50000);
     memcpy(rows2, rows, sizeof(row) * 1000);
      // send(fd, cp2, strlen(cp2), 0); 
 
     if (parse_flag == for_all) {
-      initialize(rows, cp2, 0, count_line);
-      send(fd, cp2, strlen(cp2), 0);
+      // initialize(rows, cp2, 0, count_line);
+      printf("size of cp : %lu\n", strlen(cp));
+      send(fd, cp, strlen(cp), 0);
     } 
 
     else if (parse_flag == index_html) {
-      initialize(rows, cp2, 1, count_line);
-      send(fd, cp2, strlen(cp2), 0);
+      // initialize(rows, cp2, 1, count_line);
+      send(fd, cp, strlen(cp), 0);
     }
 
     else if (parse_flag == sort_cq) {
-      initialize(rows, cp2, 2, count_line);
+      // initialize(rows, cp2, 2, count_line);
       send(fd, cp2, strlen(cp2), 0);
     }
 
     else if (parse_flag == sort_dif) {
-      initialize(rows, cp2, 3, count_line);
-      send(fd, cp2, strlen(cp2), 0);
+      // initialize(rows, cp2, 3, count_line);
+      send(fd, cp3, strlen(cp3), 0);
     }
 
     else if (parse_flag == filtered) {
-      filter(rows2, cp2, &keyword[0], count_line);
-      send(fd, cp2, strlen(cp2), 0);
+      memset(&cp4[0], '\0', 50000);
+      filter(rows2, cp4, &keyword[0], count_line);
+      send(fd, cp4, strlen(cp4), 0);
     }
 
     else if (parse_flag == average_cd) {
-      initialize(rows, cp2, 5, count_line);
-      send(fd, cp2, strlen(cp2), 0);
+      // initialize(rows, cp2, 5, count_line);
+      send(fd, cp5, strlen(cp5), 0);
     }
 
     else if (parse_flag == average_iq) {
-      initialize(rows, cp2, 6, count_line);
-      send(fd, cp2, strlen(cp2), 0);
+      // initialize(rows, cp6, 6, count_line);
+      sleep(10);
+      send(fd, cp6, strlen(cp6), 0);
     }
 
-	// 6. send: send the outgoing message (response) over the socket
-	// note that the second argument is a char*, and the third is the number of chars	
+  // 6. send: send the outgoing message (response) over the socket
+  // note that the second argument is a char*, and the third is the number of chars 
 
+  
 
-	// 7. close: close the connection
+  // 7. close: close the connection
     close(fd);
     printf("Server closed connection\n");
-    }
-    pthread_mutex_lock(&lock);
-    int temp_is_quit = is_quit;
-    pthread_mutex_unlock(&lock);
-    if (temp_is_quit == 1) {
-      break;
-    }
-  }
-      // 8. close: close the socket
-  close(sock);
-  printf("Server shutting down\n");
 
-  free(cp2);
-  free(rows2);
-  free(rows);
-
-  return 0;
-
+    // return &fd;
+    return NULL;
 }
-
 
 
 
